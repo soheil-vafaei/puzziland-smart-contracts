@@ -1,12 +1,8 @@
-/**
- *Submitted for verification at Etherscan.io on 2021-12-26
-*/
+
 
 // File: contracts/IDEX.sol
 
-
-
-pragma solidity ^0.8.10;
+pragma solidity 0.8.17;
 
 interface IDexFactory {
   function createPair(address tokenA, address tokenB) external returns (address pair);
@@ -37,7 +33,7 @@ interface IDexRouter {
 
 
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.17;
 
 abstract contract Ownable {
   address private _owner;
@@ -69,7 +65,7 @@ abstract contract Ownable {
 
 
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.17;
 
 interface IBEP20 {
   function totalSupply() external view returns (uint256);
@@ -90,7 +86,7 @@ interface IBEP20 {
 
 
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.17;
 
 
 
@@ -98,10 +94,10 @@ contract BEP20 is IBEP20, Ownable {
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
-  string private constant NAME = "HNP";
-  string private constant SYMBOL = "HonP";
-  uint8 private constant DECIMALS = 9;
-  uint256 private constant TOTAL_SUPPLY = 10000 * 10**DECIMALS;
+  string private constant NAME = "Biconomic";
+  string private constant SYMBOL = "BMB";
+  uint8 private constant DECIMALS = 18;
+  uint256 private constant TOTAL_SUPPLY = 1000000000 * 10**DECIMALS;
 
   constructor(address owner) Ownable(owner) {
     _balances[owner] = TOTAL_SUPPLY;
@@ -193,6 +189,11 @@ contract BEP20 is IBEP20, Ownable {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (utils/math/SafeMath.sol)
 
+pragma solidity ^0.8.0;
+
+// CAUTION
+// This version of SafeMath should only be used with Solidity 0.8 or later,
+// because it relies on the compiler's built in overflow checks.
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations.
@@ -413,21 +414,19 @@ library SafeMath {
     }
 }
 
-// File: contracts/Token.sol
+// File: contracts/Step.sol
 
+pragma solidity 0.8.17;
 
-
-pragma solidity ^0.8.10;
-
-
-
-contract HNP is BEP20 {
-    using SafeMath for uint256;
+contract BMBToken is BEP20 {
+  using SafeMath for uint256;
 
   IDexRouter public constant ROUTER = IDexRouter(0x10ED43C718714eb63d5aA57B78B54704E256024E);
   address public immutable pair;
 
   address public rewardWallet;
+
+  bool public swapEnabled;
 
   uint256 public buyTax = 5;
   uint256 public sellTax = 5;
@@ -435,20 +434,23 @@ contract HNP is BEP20 {
 
   uint256 public transferGas = 25000;
 
-//   bool public SwapBack;
-  bool public taxStatus;
-
+  mapping (address => bool) public isCEX;
   mapping (address => bool) public isMarketMaker;
 
-//   event TriggerSwapBack();
+
+  event TriggerSwapBack();
   event RecoverBNB(uint256 amount);
   event RecoverBEP20(address indexed token, uint256 amount);
+  event SetCEX(address indexed account, bool indexed exempt);
   event SetMarketMaker(address indexed account, bool indexed isMM);
   event SetTaxes(uint256 reward, uint256 liquidity, uint256 marketing);
+  event SetShares(uint256 rewardShare, uint256 liquidityShare, uint256 marketingShare);
   event SetTransferGas(uint256 newGas, uint256 oldGas);
   event SetRewardWallet(address newAddress, address oldAddress);
   event AutoLiquidity(uint256 pair, uint256 tokens);
   event DepositRewards(address indexed wallet, uint256 amount);
+  event AirDrop (address indexed wallet, uint256 amount);
+
 
   constructor(address owner, address rewards) BEP20(owner) {
     pair = IDexFactory(ROUTER.factory()).createPair(ROUTER.WETH(), address(this));
@@ -456,21 +458,22 @@ contract HNP is BEP20 {
     isMarketMaker[pair] = true;
 
     rewardWallet = rewards;
-
   }
 
   // Override
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
 
-    if (_shouldTax()) 
-    { 
-        uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
-        super._transfer(sender, recipient, amountAfterTaxes);
-    }
-    else {super._transfer(sender, recipient, amount);}
-    
+    if (_shouldSwapBack(recipient)) { _swapBack(); }
+    uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
+
+    super._transfer(sender, recipient, amountAfterTaxes);
   }
+
+  // Public
+
+
+  receive() external payable {}
 
   // Private
 
@@ -482,21 +485,16 @@ contract HNP is BEP20 {
 
     if (taxAmount > 0) { super._transfer(sender, address(this), taxAmount); }
 
-    if (isMarketMaker[sender])
-    {
-        return amount - taxAmount;
-    }
-    else
-    {
-        return taxAmount;
-    }
+    return amount - taxAmount;
   }
 
   function _getTotalTax(address sender, address recipient) private view returns (uint256) {
 
+    if (isCEX[recipient]) { return 0; }
+    if (isCEX[sender]) { return buyTax; }
+
     if (isMarketMaker[sender]) {
       return buyTax;
-
     } else if (isMarketMaker[recipient]) {
       return sellTax;
     } else {
@@ -504,91 +502,16 @@ contract HNP is BEP20 {
     }
   }
 
-//   function _shouldSwapBack() private view returns (bool) {
-//     return SwapBack;
-//   }
+  function _shouldSwapBack(address recipient) private view returns (bool) {
+    return isMarketMaker[recipient] && swapEnabled;
+  }
 
-  function _shouldTax() private view returns (bool)
+  function setSwapEnable (bool sEnable) public onlyOwner
   {
-      return taxStatus;
+    swapEnabled = sEnable;
   }
 
-//   function setSwapBackStatus (bool st) public onlyOwner
-//   {
-//       SwapBack = st;
-//   }
-
-    function setTaxStatus(bool st) public onlyOwner
-  {
-      taxStatus = st;
-  }
-
-//   function _swapBack() private {
-//     address[] memory path = new address[](2);
-//     path[0] = address(this);
-//     path[1] = ROUTER.WETH();
-
-//     uint256 amountToSwap = balanceOf(address(this));
-
-//     ROUTER.swapExactTokensForETH(
-//       amountToSwap,
-//       0,
-//       path,
-//       address(this),
-//       block.timestamp
-//     );
-
-//     uint256 amountBNB = address(this).balance ;
-
-//     (bool success, ) = payable(rewardWallet).call{value: amountBNB, gas: transferGas}("");
-//     require(success, "Transfer failed.");
-//   }
-
-  // Owner
-
-  function recoverBNB() external onlyOwner {
-    uint256 amount = address(this).balance;
-    (bool sent,) = payable(rewardWallet).call{value: amount, gas: transferGas}("");
-    require(sent, "Tx failed");
-    emit RecoverBNB(amount);
-  }
-
-  function recoverBEP20(IBEP20 token, address recipient) external onlyOwner {
-    require(address(token) != address(this), "Can't withdraw Token");
-    uint256 amount = token.balanceOf(address(this));
-    token.transfer(recipient, amount);
-    emit RecoverBEP20(address(token), amount);
-  }
-
-  function setIsMarketMaker(address account, bool value) external onlyOwner {
-    require(account != pair, "Can't modify pair");
-    isMarketMaker[account] = value;
-    emit SetMarketMaker(account, value);
-  }
-
-  function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
-    require(newBuyTax <= 100 && newSellTax <= 100 && newTransferTax <= 100, "Too high taxes");
-    buyTax = newBuyTax;
-    sellTax = newSellTax;
-    transferTax = newTransferTax;
-    emit SetTaxes(buyTax, sellTax, transferTax);
-  }
-
-
-  function setTransferGas(uint256 newGas) external onlyOwner {
-    require(newGas >= 21000 && newGas <= 50000, "Invalid gas parameter");
-    emit SetTransferGas(newGas, transferGas);
-    transferGas = newGas;
-  }
-
-  function setRewardWallet(address newAddress) external onlyOwner {
-    require(newAddress != address(0), "New reward pool is the zero address");
-    emit SetRewardWallet(newAddress, rewardWallet);
-    rewardWallet = newAddress;
-  }
-
-  function getRewards () public onlyOwner
-  {
+  function _swapBack() private {
     address[] memory path = new address[](2);
     path[0] = address(this);
     path[1] = ROUTER.WETH();
@@ -603,16 +526,71 @@ contract HNP is BEP20 {
       block.timestamp
     );
 
-    uint256 amountBNB = address(this).balance ;
-
-    (bool success, ) = payable(rewardWallet).call{value: amountBNB, gas: transferGas}("");
-    require(success, "Transfer failed.");
-  }   
-
-  function getRewardToken () public onlyOwner
-  {
-      uint256 amountToSwap = balanceOf(address(this));
-      super._transfer(address(this), rewardWallet, amountToSwap);
+    uint amountBNBRewards = address(this).balance;
+    (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
+    if (rewardSuccess) 
+    {
+        emit DepositRewards(rewardWallet, amountBNBRewards); 
+    }
   }
 
+  // Owner
+
+
+  function recoverBNB() external onlyOwner {
+    uint256 amount = address(this).balance;
+    (bool sent,) = payable(rewardWallet).call{value: amount, gas: transferGas}("");
+    require(sent, "Tx failed");
+    emit RecoverBNB(amount);
+  }
+
+  function recoverBEP20(IBEP20 token, address recipient) external onlyOwner {
+    require(address(token) != address(this), "Can't withdraw Step");
+    uint256 amount = token.balanceOf(address(this));
+    token.transfer(recipient, amount);
+    emit RecoverBEP20(address(token), amount);
+  }
+
+  function setIsCEX(address account, bool value) external onlyOwner {
+    isCEX[account] = value;
+    emit SetCEX(account, value);
+  }
+
+  function setIsMarketMaker(address account, bool value) external onlyOwner {
+    require(account != pair, "Can't modify pair");
+    isMarketMaker[account] = value;
+    emit SetMarketMaker(account, value);
+  }
+
+  function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
+    require(newBuyTax <= 1500 && newSellTax <= 1500 && newTransferTax <= 1500, "Too high taxes");
+    buyTax = newBuyTax;
+    sellTax = newSellTax;
+    transferTax = newTransferTax;
+    emit SetTaxes(buyTax, sellTax, transferTax);
+  }
+
+  function setTransferGas(uint256 newGas) external onlyOwner {
+    require(newGas >= 21000 && newGas <= 50000, "Invalid gas parameter");
+    emit SetTransferGas(newGas, transferGas);
+    transferGas = newGas;
+  }
+
+  function setRewardWallet(address newAddress) external onlyOwner {
+    require(newAddress != address(0), "New reward pool is the zero address");
+    emit SetRewardWallet(newAddress, rewardWallet);
+    rewardWallet = newAddress;
+  }
+
+    function doAirDrop(address[] memory _address, uint256 _amount) onlyOwner public returns (bool) {
+    uint256 count = _address.length;
+
+    for (uint256 i = 0; i < count; i++)
+    {
+        BEP20._transfer(msg.sender, _address [i], _amount);
+        emit AirDrop (_address[i], _amount);
+    }
+
+    return true;
+  }
 }
