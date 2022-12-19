@@ -529,10 +529,10 @@ contract BMBToken is BEP20 {
     path[0] = address(this);
     path[1] = ROUTER.WETH();
 
-    uint256 amountToSwap = balanceOf(address(this));
+    uint256 amountToSwap = balanceOf(address(this)).mul(sellTax).div(100);
 
     _approve(address(this), address(ROUTER), amountToSwap);
-    
+
     ROUTER.swapExactTokensForETH(
       amountToSwap,
       0,
