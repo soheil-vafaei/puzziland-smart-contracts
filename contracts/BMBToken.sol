@@ -487,10 +487,6 @@ contract BMBToken is BEP20 {
     super._transfer(sender, recipient, amountAfterTaxes);
   }
 
-  // Public
-
-
-  receive() external payable {}
 
   // Private
 
@@ -535,6 +531,8 @@ contract BMBToken is BEP20 {
 
     uint256 amountToSwap = balanceOf(address(this));
 
+    _approve(address(this), address(ROUTER), amountToSwap);
+    
     ROUTER.swapExactTokensForETH(
       amountToSwap,
       0,
