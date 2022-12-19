@@ -428,9 +428,9 @@ contract BMBToken is BEP20 {
 
   bool public swapEnabled;
 
-  uint256 public buyTax = 5;
+  uint256 public buyTax = 3;
   uint256 public sellTax = 5;
-  uint256 public transferTax = 0;
+  uint256 public transferTax = 1;
 
   uint256 public transferGas = 25000;
 
@@ -527,6 +527,7 @@ contract BMBToken is BEP20 {
     );
 
     uint amountBNBRewards = address(this).balance;
+
     (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
     if (rewardSuccess) 
     {
@@ -563,7 +564,7 @@ contract BMBToken is BEP20 {
   }
 
   function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
-    require(newBuyTax <= 1500 && newSellTax <= 1500 && newTransferTax <= 1500, "Too high taxes");
+    require(newBuyTax <= 100 && newSellTax <= 100 && newTransferTax <= 100, "Too high taxes");
     buyTax = newBuyTax;
     sellTax = newSellTax;
     transferTax = newTransferTax;
