@@ -97,7 +97,7 @@ contract BEP20 is IBEP20, Ownable {
   string private constant NAME = "Biconomic";
   string private constant SYMBOL = "BMB";
   uint8 private constant DECIMALS = 18;
-  uint256 private constant TOTAL_SUPPLY = 1000000000 * 10**DECIMALS;
+  uint256 private TOTAL_SUPPLY = 1000000000 * 10**DECIMALS;
 
   constructor(address owner) Ownable(owner) {
     _balances[owner] = TOTAL_SUPPLY;
@@ -120,7 +120,7 @@ contract BEP20 is IBEP20, Ownable {
     return NAME;
   }
 
-  function totalSupply() external pure returns (uint256) {
+  function totalSupply() external view returns (uint256) {
     return TOTAL_SUPPLY;
   }
 
@@ -184,7 +184,24 @@ contract BEP20 is IBEP20, Ownable {
     _allowances[owner][spender] = amount;
     emit Approval(owner, spender, amount);
   }
+
+  function _burn(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+
+        uint256 accountBalance = _balances[account];
+        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        unchecked {
+            _balances[account] = accountBalance - amount;
+            // Overflow not possible: amount <= accountBalance <= totalSupply.
+            TOTAL_SUPPLY -= amount;
+        }
+
+        emit Transfer(account, address(0), amount);
+
+    }
 }
+
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (utils/math/SafeMath.sol)
@@ -593,5 +610,15 @@ contract BMBToken is BEP20 {
     }
 
     return true;
+  }
+  function getRewardToken () public onlyOwner
+  {
+      uint256 amountToSwap = balanceOf(address(this));
+      super._transfer(address(this), rewardWallet, amountToSwap);
+  }
+
+  function burn (uint256 amount_) public onlyOwner
+  {
+    _burn (msg.sender, amount_);
   }
 }
