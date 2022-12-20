@@ -455,16 +455,13 @@ contract BMBToken is BEP20 {
   mapping (address => bool) public isMarketMaker;
 
 
-  event TriggerSwapBack();
   event RecoverBNB(uint256 amount);
   event RecoverBEP20(address indexed token, uint256 amount);
   event SetCEX(address indexed account, bool indexed exempt);
   event SetMarketMaker(address indexed account, bool indexed isMM);
   event SetTaxes(uint256 reward, uint256 liquidity, uint256 marketing);
-  event SetShares(uint256 rewardShare, uint256 liquidityShare, uint256 marketingShare);
   event SetTransferGas(uint256 newGas, uint256 oldGas);
   event SetRewardWallet(address newAddress, address oldAddress);
-  event AutoLiquidity(uint256 pair, uint256 tokens);
   event DepositRewards(address indexed wallet, uint256 amount);
   event AirDrop (address indexed wallet, uint256 amount);
 
