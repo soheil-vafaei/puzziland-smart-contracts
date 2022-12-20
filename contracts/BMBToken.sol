@@ -68,18 +68,78 @@ abstract contract Ownable {
 pragma solidity 0.8.17;
 
 interface IBEP20 {
-  function totalSupply() external view returns (uint256);
-  function decimals() external view returns (uint8);
-  function symbol() external view returns (string memory);
-  function name() external view returns (string memory);
-  function getOwner() external view returns (address);
-  function balanceOf(address account) external view returns (uint256);
-  function transfer(address recipient, uint256 amount) external returns (bool);
-  function allowance(address _owner, address spender) external view returns (uint256);
-  function approve(address spender, uint256 amount) external returns (bool);
-  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
 }
 
 // File: contracts/BEP20.sol
@@ -91,6 +151,7 @@ pragma solidity 0.8.17;
 
 
 contract BEP20 is IBEP20, Ownable {
+
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
@@ -99,49 +160,114 @@ contract BEP20 is IBEP20, Ownable {
   uint8 private constant DECIMALS = 18;
   uint256 private TOTAL_SUPPLY = 1000000000 * 10**DECIMALS;
 
+  // set the value owner for Ownable contract
   constructor(address owner) Ownable(owner) {
     _balances[owner] = TOTAL_SUPPLY;
     emit Transfer(address(0), owner, TOTAL_SUPPLY);
   }
 
+  // return owner address conrtact
   function getOwner() public view returns (address) {
     return owner();
   }
 
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5.05` (`505 / 10 ** 2`).
+     *
+     * Tokens usually opt for a value of 18, imitating the relationship between
+     * Ether and Wei. This is the value {ERC20} uses, unless this function is
+     * overridden;
+     *
+     * NOTE: This information is only used for _display_ purposes: it in
+     * no way affects any of the arithmetic of the contract, including
+     * {IERC20-balanceOf} and {IERC20-transfer}.
+     */
   function decimals() public pure returns (uint8) {
     return DECIMALS;
   }
 
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
   function symbol() external pure returns (string memory) {
     return SYMBOL;
   }
 
+    /**
+     * @dev Returns the name of the token.
+     */
   function name() external pure returns (string memory) {
     return NAME;
   }
 
+    /**
+     * @dev See {IERC20-totalSupply}.
+     */
   function totalSupply() external view returns (uint256) {
     return TOTAL_SUPPLY;
   }
 
+    /**
+     * @dev See {IERC20-balanceOf}.
+     */
   function balanceOf(address account) public view returns (uint256) {
     return _balances[account];
   }
 
+    /**
+     * @dev See {IERC20-transfer}.
+     *
+     * Requirements:
+     *
+     * - `to` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
   function transfer(address recipient, uint256 amount) external returns (bool) {
     _transfer(msg.sender, recipient, amount);
     return true;
   }
 
+    /**
+     * @dev See {IERC20-allowance}.
+     */
   function allowance(address owner, address spender) external view returns (uint256) {
     return _allowances[owner][spender];
   }
 
+    /**
+     * @dev See {IERC20-approve}.
+     *
+     * NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on
+     * `transferFrom`. This is semantically equivalent to an infinite approval.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
   function approve(address spender, uint256 amount) external returns (bool) {
     _approve(msg.sender, spender, amount);
     return true;
   }
 
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20}.
+     *
+     * NOTE: Does not update the allowance if the current allowance
+     * is the maximum `uint256`.
+     *
+     * Requirements:
+     *
+     * - `from` and `to` cannot be the zero address.
+     * - `from` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``from``'s tokens of at least
+     * `amount`.
+     */
   function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
     _transfer(sender, recipient, amount);
 
@@ -152,11 +278,38 @@ contract BEP20 is IBEP20, Ownable {
     return true;
   }
 
+    /**
+     * @dev Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
   function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
     _approve(msg.sender, spender, _allowances[msg.sender][spender] + addedValue);
     return true;
   }
 
+
+    /**
+     * @dev Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
   function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
     uint256 currentAllowance = _allowances[msg.sender][spender];
     require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
@@ -165,6 +318,20 @@ contract BEP20 is IBEP20, Ownable {
     return true;
   }
 
+    /**
+     * @dev Moves `amount` of tokens from `from` to `to`.
+     *
+     * This internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements:
+     *
+     * - `from` cannot be the zero address.
+     * - `to` cannot be the zero address.
+     * - `from` must have a balance of at least `amount`.
+     */
   function _transfer(address sender, address recipient, uint256 amount) internal virtual {
     require(sender != address(0), "BEP20: transfer from the zero address");
     require(recipient != address(0), "BEP20: transfer to the zero address");
@@ -177,6 +344,19 @@ contract BEP20 is IBEP20, Ownable {
     emit Transfer(sender, recipient, amount);
   }
 
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+     *
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `owner` cannot be the zero address.
+     * - `spender` cannot be the zero address.
+     */
   function _approve(address owner, address spender, uint256 amount) internal {
     require(owner != address(0), "BEP20: approve from the zero address");
     require(spender != address(0), "BEP20: approve to the zero address");
@@ -185,6 +365,17 @@ contract BEP20 is IBEP20, Ownable {
     emit Approval(owner, spender, amount);
   }
 
+    /**
+     * @dev Destroys `amount` tokens from `account`, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     * - `account` must have at least `amount` tokens.
+     */
   function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from the zero address");
 
@@ -438,24 +629,37 @@ pragma solidity 0.8.17;
 contract BMBToken is BEP20 {
   using SafeMath for uint256;
 
+  // set router address 'pancakeswap'
   IDexRouter public constant ROUTER = IDexRouter(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+
+  // address pair token / bnb on pancakeswap
   address public immutable pair;
 
+  // reward wallet for get fee transfers token
   address public rewardWallet;
 
-  bool public swapEnabled;
-
+  // Percentage fee related to the purchase
   uint256 public buyTax = 3;
+
+  // Percentage fee related to sales
   uint256 public sellTax = 5;
+
+  // Percentage fee related to trnsfers
   uint256 public transferTax = 1;
 
   uint256 public transferGas = 25000;
 
+  // for set Centralized Exchange 
   mapping (address => bool) public isCEX;
+
+  // for set marketmaker 'pair token on pancakeswap'
   mapping (address => bool) public isMarketMaker;
+
+  // for set whitelisted 'transfer no fee'
   mapping (address => bool) public isWhitelisted;
 
 
+    // EVENT //
   event RecoverBNB(uint256 amount);
   event RecoverBEP20(address indexed token, uint256 amount);
   event SetCEX(address indexed account, bool indexed exempt);
@@ -469,21 +673,26 @@ contract BMBToken is BEP20 {
 
 
   constructor(address owner, address rewards) BEP20(owner) {
+
+    // set pair token
     pair = IDexFactory(ROUTER.factory()).createPair(ROUTER.WETH(), address(this));
 
     isMarketMaker[pair] = true;
 
+    // set reward wallet token
     rewardWallet = rewards;
   }
 
   // Override
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
+    // if sender or recipient address is WL no take fees
     if (isWhitelisted[sender] || isWhitelisted[recipient] ) {
       super._transfer(sender, recipient, amount);
       return;
     }
 
+    // get fee on pancakeswap 
     uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
 
     super._transfer(sender, recipient, amountAfterTaxes);
@@ -492,10 +701,14 @@ contract BMBToken is BEP20 {
 
   // Private
 
+  // take fee from users for sale - buy - transfer
   function _takeTax(address sender, address recipient, uint256 amount) private returns (uint256) {
     if (amount == 0) { return amount; }
     
+    // Obtaining percentage of fee (purchase or sale or transfer)
     uint256 percent = _getTotalTax(sender, recipient) ;
+
+    // Reduce the desired percentage
     uint256 taxAmount = amount.mul(percent).div(100);
 
     if (taxAmount > 0) { super._transfer(sender, address(this), taxAmount); }
@@ -503,6 +716,7 @@ contract BMBToken is BEP20 {
     return amount - taxAmount;
   }
 
+  // Obtaining percentage of fee (purchase or sale or transfer) and return this
   function _getTotalTax(address sender, address recipient) private view returns (uint256) {
 
     if (isCEX[recipient]) { return 0; }
@@ -519,7 +733,7 @@ contract BMBToken is BEP20 {
 
   // Owner
 
-
+  // take BNB Balance smartcontract token
   function recoverBNB() external onlyOwner {
     uint256 amount = address(this).balance;
     (bool sent,) = payable(rewardWallet).call{value: amount, gas: transferGas}("");
@@ -527,6 +741,7 @@ contract BMBToken is BEP20 {
     emit RecoverBNB(amount);
   }
 
+  // take BEP20 Balance smartcontract token
   function recoverBEP20(IBEP20 token, address recipient) external onlyOwner {
     require(address(token) != address(this), "Can't withdraw Step");
     uint256 amount = token.balanceOf(address(this));
@@ -534,23 +749,26 @@ contract BMBToken is BEP20 {
     emit RecoverBEP20(address(token), amount);
   }
 
+  // set CEX addresses
   function setIsCEX(address account, bool value) external onlyOwner {
     isCEX[account] = value;
     emit SetCEX(account, value);
   }
 
+  // set marketmaker addresses
   function setIsMarketMaker(address account, bool value) external onlyOwner {
     require(account != pair, "Can't modify pair");
     isMarketMaker[account] = value;
     emit SetMarketMaker(account, value);
   }
 
+  // set WL addresses
   function setIsWhitelisted(address account, bool value) external onlyOwner {
     isWhitelisted[account] = value;
     emit SetWhitelisted(account, value);
   }
 
-
+  // set taxes 'Setting the fees for buying and selling and transfer' Note (the owner cannot set this percentage higher than 49) 
   function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
     require(newBuyTax <= 49 && newSellTax <= 49 && newTransferTax <= 49, "Too high taxes");
     buyTax = newBuyTax;
@@ -565,13 +783,15 @@ contract BMBToken is BEP20 {
     transferGas = newGas;
   }
 
+  // set rewardwallet
   function setRewardWallet(address newAddress) external onlyOwner {
     require(newAddress != address(0), "New reward pool is the zero address");
     emit SetRewardWallet(newAddress, rewardWallet);
     rewardWallet = newAddress;
   }
 
-    function doAirDrop(address[] memory _address, uint256 _amount) onlyOwner public returns (bool) {
+  // function for airdrop token to a list of specified addresses 
+  function doAirDrop(address[] memory _address, uint256 _amount) onlyOwner public returns (bool) {
     uint256 count = _address.length;
 
     for (uint256 i = 0; i < count; i++)
@@ -582,12 +802,15 @@ contract BMBToken is BEP20 {
 
     return true;
   }
+
+  // get fee tokens from address token to rewardwallet
   function getRewardToken () public onlyOwner
   {
       uint256 amountToSwap = balanceOf(address(this));
       super._transfer(address(this), rewardWallet, amountToSwap);
   }
 
+  // bern function
   function burn (uint256 amount_) public onlyOwner
   {
     _burn (msg.sender, amount_);
