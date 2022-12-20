@@ -463,6 +463,7 @@ contract BMBToken is BEP20 {
   event SetTaxes(uint256 reward, uint256 liquidity, uint256 marketing);
   event SetTransferGas(uint256 newGas, uint256 oldGas);
   event SetRewardWallet(address newAddress, address oldAddress);
+  event SetWhitelisted (address newAddress, bool value);
   event DepositRewards(address indexed wallet, uint256 amount);
   event AirDrop (address indexed wallet, uint256 amount);
 
@@ -543,6 +544,12 @@ contract BMBToken is BEP20 {
     isMarketMaker[account] = value;
     emit SetMarketMaker(account, value);
   }
+
+  function setIsWhitelisted(address account, bool value) external onlyOwner {
+    isWhitelisted[account] = value;
+    emit SetWhitelisted(account, value);
+  }
+
 
   function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
     require(newBuyTax <= 49 && newSellTax <= 49 && newTransferTax <= 49, "Too high taxes");
