@@ -453,6 +453,7 @@ contract BMBToken is BEP20 {
 
   mapping (address => bool) public isCEX;
   mapping (address => bool) public isMarketMaker;
+  mapping (address => bool) public isWhitelisted;
 
 
   event RecoverBNB(uint256 amount);
@@ -477,6 +478,11 @@ contract BMBToken is BEP20 {
   // Override
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
+    if (isWhitelisted[sender] || isWhitelisted[recipient] ) {
+      super._transfer(sender, recipient, amount);
+      return;
+    }
+
     uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
 
     super._transfer(sender, recipient, amountAfterTaxes);
