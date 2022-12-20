@@ -542,7 +542,7 @@ contract BMBToken is BEP20 {
   }
 
   function setTaxes(uint256 newBuyTax, uint256 newSellTax, uint256 newTransferTax) external onlyOwner {
-    require(newBuyTax <= 100 && newSellTax <= 100 && newTransferTax <= 100, "Too high taxes");
+    require(newBuyTax <= 49 && newSellTax <= 49 && newTransferTax <= 49, "Too high taxes");
     buyTax = newBuyTax;
     sellTax = newSellTax;
     transferTax = newTransferTax;
