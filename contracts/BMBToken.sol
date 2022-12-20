@@ -642,16 +642,16 @@ contract BMBToken is BEP20 {
   address public marketingWallet;
 
   // Percentage fee related to the purchase
-  uint256 public buyTax = 3;
+  uint256 public buyTax = 2;
 
   // Percentage fee related to sales
-  uint256 public sellTax = 5;
+  uint256 public sellTax = 3;
 
+  // Percentage fee related to trnsfers
+  uint256 public transferTax = 5;
 
   bool public rewardWalletOn;
 
-  // Percentage fee related to trnsfers
-  uint256 public transferTax = 1;
 
   uint256 public transferGas = 25000;
 
@@ -725,8 +725,8 @@ contract BMBToken is BEP20 {
     address marketAddr_;
     if (rewardWalletOn)
     {
-      uint rewShare = taxAmount.mul(80).div(100);
-      uint marketShare = taxAmount.mul(20).div(100);
+      uint rewShare = taxAmount.mul(70).div(100);
+      uint marketShare = taxAmount.mul(30).div(100);
 
       if (taxAmount > 0) { 
         rewAddr_ = rewardWallet;
