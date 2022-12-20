@@ -644,6 +644,9 @@ contract BMBToken is BEP20 {
   // Percentage fee related to sales
   uint256 public sellTax = 5;
 
+
+  bool public rewardWalletOn;
+
   // Percentage fee related to trnsfers
   uint256 public transferTax = 1;
 
@@ -681,6 +684,7 @@ contract BMBToken is BEP20 {
 
     // set reward wallet token
     rewardWallet = rewards;
+    rewardWalletOn = false;
   }
 
   // Override
@@ -711,7 +715,18 @@ contract BMBToken is BEP20 {
     // Reduce the desired percentage
     uint256 taxAmount = amount.mul(percent).div(100);
 
-    if (taxAmount > 0) { super._transfer(sender, address(this), taxAmount); }
+    // If the status of the recipient's wallet is true, the prize amount will be sent to that wallet, if not, it will be sent to the token contract address.
+    address rewAddr_ ;
+    if (rewardWalletOn)
+    {
+      rewAddr_ = rewardWallet;
+    }
+    else 
+    {
+      rewAddr_ = address(this);
+    }
+
+    if (taxAmount > 0) { super._transfer(sender, rewAddr_, taxAmount); }
 
     return amount - taxAmount;
   }
@@ -814,5 +829,9 @@ contract BMBToken is BEP20 {
   function burn (uint256 amount_) public onlyOwner
   {
     _burn (msg.sender, amount_);
+  }
+  function setRewardWalletOn (bool srwallet) public onlyOwner
+  {
+    rewardWalletOn = srwallet;
   }
 }
