@@ -480,8 +480,6 @@ contract BMBToken is BEP20 {
   // Override
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
-
-    // if (_shouldSwapBack(recipient)) { _swapBack(); }
     uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
 
     super._transfer(sender, recipient, amountAfterTaxes);
@@ -513,57 +511,6 @@ contract BMBToken is BEP20 {
     } else {
       return transferTax;
     }
-  }
-
-  function _shouldSwapBack(address recipient) private view returns (bool) {
-    return isMarketMaker[recipient] && swapEnabled;
-  }
-
-  function setSwapEnable (bool sEnable) public onlyOwner
-  {
-    swapEnabled = sEnable;
-  }
-
-  uint liquidityShare = 3;
-
-  function _swapBack(uint amountToSwap) external onlyOwner {
-    address[] memory path = new address[](2);
-    path[0] = address(this);
-    path[1] = ROUTER.WETH();
-
-    // uint256 amountToSwap = balanceOf(address(this)).mul(sellTax).div(100);
-    // uint256 liquidityTokens = balanceOf(address(this)).mul(liquidityShare).div(100);
-
-    transferFrom(msg.sender, address(ROUTER), amountToSwap);
-    _approve(msg.sender, address(ROUTER), amountToSwap);
-
-    IDexRouter(ROUTER).swapExactTokensForETH(
-      amountToSwap,
-      0,
-      path,
-      msg.sender,
-      block.timestamp
-    );
-
-    // uint amountBNBRewards = address(this).balance;
-    // (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
-    // if (rewardSuccess) 
-    // {
-    //     emit DepositRewards(rewardWallet, amountBNBRewards); 
-    // }
-
-    // uint amo = address(this).balance;
-
-    // if (liquidityTokens > 0) {
-    //   ROUTER.addLiquidityETH {value : amo}(
-    //     address(this),
-    //     liquidityTokens,
-    //     0,
-    //     0,
-    //     address(this),
-    //     block.timestamp
-    //   );
-    // }
   }
 
   // Owner
