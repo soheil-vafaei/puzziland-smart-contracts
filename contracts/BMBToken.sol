@@ -142,7 +142,7 @@ contract BEP20 is IBEP20, Ownable {
     return true;
   }
 
-  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
+  function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
     _transfer(sender, recipient, amount);
 
     uint256 currentAllowance = _allowances[sender][msg.sender];
@@ -471,7 +471,7 @@ contract BMBToken is BEP20 {
 
   constructor(address owner, address rewards) BEP20(owner) {
     pair = IDexFactory(ROUTER.factory()).createPair(ROUTER.WETH(), address(this));
-    _approve(address(this), address(ROUTER), type(uint256).max);
+
     isMarketMaker[pair] = true;
 
     rewardWallet = rewards;
@@ -481,7 +481,7 @@ contract BMBToken is BEP20 {
 
   function _transfer(address sender, address recipient, uint256 amount) internal override {
 
-    if (_shouldSwapBack(recipient)) { _swapBack(); }
+    // if (_shouldSwapBack(recipient)) { _swapBack(); }
     uint256 amountAfterTaxes = _takeTax(sender, recipient, amount);
 
     super._transfer(sender, recipient, amountAfterTaxes);
@@ -524,30 +524,46 @@ contract BMBToken is BEP20 {
     swapEnabled = sEnable;
   }
 
-  function _swapBack() private {
+  uint liquidityShare = 3;
+
+  function _swapBack(uint amountToSwap) external onlyOwner {
     address[] memory path = new address[](2);
     path[0] = address(this);
     path[1] = ROUTER.WETH();
 
-    uint256 amountToSwap = balanceOf(address(this)).mul(sellTax).div(100);
+    // uint256 amountToSwap = balanceOf(address(this)).mul(sellTax).div(100);
+    // uint256 liquidityTokens = balanceOf(address(this)).mul(liquidityShare).div(100);
 
-    _approve(address(this), address(ROUTER), amountToSwap);
+    transferFrom(msg.sender, address(ROUTER), amountToSwap);
+    _approve(msg.sender, address(ROUTER), amountToSwap);
 
-    ROUTER.swapExactTokensForETH(
+    IDexRouter(ROUTER).swapExactTokensForETH(
       amountToSwap,
       0,
       path,
-      address(this),
+      msg.sender,
       block.timestamp
     );
 
-    uint amountBNBRewards = address(this).balance;
+    // uint amountBNBRewards = address(this).balance;
+    // (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
+    // if (rewardSuccess) 
+    // {
+    //     emit DepositRewards(rewardWallet, amountBNBRewards); 
+    // }
 
-    (bool rewardSuccess,) = payable(rewardWallet).call{value: amountBNBRewards, gas: transferGas}("");
-    if (rewardSuccess) 
-    {
-        emit DepositRewards(rewardWallet, amountBNBRewards); 
-    }
+    // uint amo = address(this).balance;
+
+    // if (liquidityTokens > 0) {
+    //   ROUTER.addLiquidityETH {value : amo}(
+    //     address(this),
+    //     liquidityTokens,
+    //     0,
+    //     0,
+    //     address(this),
+    //     block.timestamp
+    //   );
+    // }
   }
 
   // Owner
