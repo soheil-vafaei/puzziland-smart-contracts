@@ -638,6 +638,9 @@ contract BMBToken is BEP20 {
   // reward wallet for get fee transfers token
   address public rewardWallet;
 
+  // marketing wallet for get fee transfers token
+  address public marketingWallet;
+
   // Percentage fee related to the purchase
   uint256 public buyTax = 3;
 
@@ -670,12 +673,13 @@ contract BMBToken is BEP20 {
   event SetTaxes(uint256 reward, uint256 liquidity, uint256 marketing);
   event SetTransferGas(uint256 newGas, uint256 oldGas);
   event SetRewardWallet(address newAddress, address oldAddress);
+  event SetMarketingWallet(address newWallet, address oldWallet);
   event SetWhitelisted (address newAddress, bool value);
   event DepositRewards(address indexed wallet, uint256 amount);
   event AirDrop (address indexed wallet, uint256 amount);
 
 
-  constructor(address owner, address rewards) BEP20(owner) {
+  constructor(address owner, address rewards, address marketings) BEP20(owner) {
 
     // set pair token
     pair = IDexFactory(ROUTER.factory()).createPair(ROUTER.WETH(), address(this));
@@ -684,6 +688,7 @@ contract BMBToken is BEP20 {
 
     // set reward wallet token
     rewardWallet = rewards;
+    marketingWallet = marketings;
     rewardWalletOn = false;
   }
 
@@ -717,16 +722,25 @@ contract BMBToken is BEP20 {
 
     // If the status of the recipient's wallet is true, the prize amount will be sent to that wallet, if not, it will be sent to the token contract address.
     address rewAddr_ ;
+    address marketAddr_;
     if (rewardWalletOn)
     {
-      rewAddr_ = rewardWallet;
+      uint rewShare = taxAmount.mul(80).div(100);
+      uint marketShare = taxAmount.mul(20).div(100);
+
+      if (taxAmount > 0) { 
+        rewAddr_ = rewardWallet;
+        super._transfer(sender, rewAddr_, rewShare); 
+
+        marketAddr_ = marketingWallet;
+        super._transfer(sender, marketAddr_, marketShare); 
+      }
     }
     else 
     {
       rewAddr_ = address(this);
+      if (taxAmount > 0) { super._transfer(sender, rewAddr_, taxAmount); }
     }
-
-    if (taxAmount > 0) { super._transfer(sender, rewAddr_, taxAmount); }
 
     return amount - taxAmount;
   }
@@ -803,6 +817,13 @@ contract BMBToken is BEP20 {
     require(newAddress != address(0), "New reward pool is the zero address");
     emit SetRewardWallet(newAddress, rewardWallet);
     rewardWallet = newAddress;
+  }
+
+  // set matketing wallet
+  function setMarketingWallet(address newWallet) external onlyOwner {
+    require(newWallet != address(0), "New marketing wallet is the zero address");
+    emit SetMarketingWallet(newWallet, marketingWallet);
+    marketingWallet = newWallet;
   }
 
   // function for airdrop token to a list of specified addresses 
