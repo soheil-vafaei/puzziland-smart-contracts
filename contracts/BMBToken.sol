@@ -843,7 +843,7 @@ contract BMBToken is BEP20 {
   function getRewardToken () public onlyOwner
   {
       uint256 amountToSwap = balanceOf(address(this));
-      super._transfer(address(this), rewardWallet, amountToSwap);
+      super._transfer(address(this), marketingWallet, amountToSwap);
   }
 
   // bern function
