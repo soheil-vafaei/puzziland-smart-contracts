@@ -23,7 +23,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
-      accounts: ["f964e85c33517b7b79365a4397268109a81e363e67669c4ad6519272933382a8"]
+      accounts: ["{PRIVATE_KEY}"]
     }
   }
 };
